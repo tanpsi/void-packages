@@ -1,0 +1,158 @@
+# Template file for 'my-nerd-fonts'
+pkgname=my-nerd-fonts
+version=3.4.0
+revision=1
+create_wrksrc=yes
+depends="my-nerd-fonts-ttf>=${version}_${revision}
+ my-nerd-fonts-symbols-ttf>=${version}_${revision}"
+#my-nerd-fonts-otf>=${version}_${revision}
+short_desc="Iconic font aggregator collection"
+maintainer="tany <devtany@gmail.com>"
+license="MIT"
+homepage="https://nerdfonts.com"
+changelog="https://raw.githubusercontent.com/ryanoasis/nerd-fonts/master/changelog.md"
+distfiles="https://raw.githubusercontent.com/ryanoasis/nerd-fonts/v${version}/10-nerd-font-symbols.conf
+ https://raw.githubusercontent.com/ryanoasis/nerd-fonts/v${version}/LICENSE"
+
+_full_fonts=(
+	#'0xProto'
+	#'3270'
+	#'AdwaitaMono'
+	#'Agave'
+	#'AnonymousPro'
+	#'Arimo'
+	#'AtkinsonHyperlegibleMono'
+	#'AurulentSansMono'
+	#'BigBlueTerminal'
+	#'BitstreamVeraSansMono'
+	#'CascadiaCode'
+	#'CascadiaMono'
+	#'CodeNewRoman'
+	#'ComicShannsMono'
+	#'CommitMono'
+	#'Cousine'
+	#'D2Coding'
+	#'DaddyTimeMono'
+	#'DejaVuSansMono'
+	#'DepartureMono'
+	#'DroidSansMono'
+	#'EnvyCodeR'
+	#'FantasqueSansMono'
+	#'FiraCode'
+	#'FiraMono'
+	#'GeistMono'
+	#'Go-Mono'
+	#'Gohu'
+	'Hack'
+	#'Hasklig'
+	#'HeavyData'
+	#'Hermit'
+	#'iA-Writer'
+	#'IBMPlexMono'
+	#'Inconsolata'
+	#'InconsolataGo'
+	#'InconsolataLGC'
+	#'IntelOneMono'
+	#'Iosevka'
+	#'IosevkaTerm'
+	#'IosevkaTermSlab'
+	#'JetBrainsMono'
+	#'Lekton'
+	#'LiberationMono'
+	#'Lilex'
+	#'MartianMono'
+	#'Meslo'
+	#'Monaspace'
+	#'Monofur'
+	#'Monoid'
+	#'Mononoki'
+	#'MPlus'
+	#'Noto'
+	#'OpenDyslexic'
+	#'Overpass'
+	#'ProFont'
+	#'ProggyClean'
+	#'Recursive'
+	#'RobotoMono'
+	#'ShareTechMono'
+	#'SourceCodePro'
+	#'SpaceMono'
+	#'Terminus'
+	#'Tinos'
+	#'Ubuntu'
+	#'UbuntuMono'
+	#'UbuntuSans'
+	#'VictorMono'
+	#'ZedMono'
+)
+_symbol_font='NerdFontsSymbolsOnly'
+_fonts=("${_full_fonts[@]}" "${_symbol_font}")
+
+for f in "${_fonts[@]}"; do
+	distfiles+=" https://github.com/ryanoasis/nerd-fonts/releases/download/v${version}/${f}.tar.xz>${f}-${version}.tar.xz"
+done
+
+checksum="83b70b7f706aced1dced5d0aec67e0b6ef7a7fee9fcb37135717eb7687868cd3
+ 1f6ad4edae6479aaace3112ede5279a23284ae54b2a34db66357aef5f64df160
+ 1d00a1435638084174516975840854368a45ac30bb0bad2c0c49db713b5925f0
+ 7f8c090da3b0eaa7108646bf34cbbb6ed13d5358a72460522108b06c7ecd716a"
+
+do_extract() {
+	vsrccopy 10-nerd-font-symbols.conf "${wrksrc}"
+	vsrccopy LICENSE "${wrksrc}"
+	for f in "${_fonts[@]}"; do
+		vsrcextract --no-strip-components -C "${wrksrc}/${f}" "${f}-${version}.tar.xz"
+	done
+}
+
+do_install() {
+	vmkdir usr/share/fonts/NerdFonts/otf
+	vmkdir usr/share/fonts/NerdFonts/ttf/symbols
+
+	for family in "${_full_fonts[@]}"; do
+		for type in otf ttf; do
+			_f_arr=( ${family}/*.${type} )
+			if [ ${#_f_arr[@]} -gt 1 ]; then
+				for f in "${_f_arr[@]}"; do
+					vinstall "${f}" 644 "/usr/share/fonts/NerdFonts/${type}"
+				done
+			fi
+		done
+	done
+
+	for f in ${_symbol_font}/*.ttf; do
+		vinstall "${f}" 644 usr/share/fonts/NerdFonts/ttf/symbols
+	done
+	vinstall 10-nerd-font-symbols.conf 644 usr/share/fontconfig/conf.avail
+
+	vlicense LICENSE
+}
+
+my-nerd-fonts-symbols-ttf_package() {
+	short_desc+=" - TTF symbols-only font"
+	font_dirs="/usr/share/fonts/NerdFonts/ttf/symbols"
+	depends="font-util"
+	pkg_install() {
+		vmove usr/share/fonts/NerdFonts/ttf/symbols
+		vmove usr/share/fontconfig/conf.avail
+	}
+}
+
+# Enable (along with the dep on top) if using some OTF fonts
+#my-nerd-fonts-otf_package() {
+#	short_desc+=" - OTF fonts"
+#	font_dirs="/usr/share/fonts/NerdFonts/otf"
+#	depends="font-util"
+#	pkg_install() {
+#		vmove usr/share/fonts/NerdFonts/otf
+#	}
+#}
+
+my-nerd-fonts-ttf_package() {
+	short_desc+=" - TTF fonts"
+	font_dirs="/usr/share/fonts/NerdFonts/ttf"
+	depends="font-util my-nerd-fonts-symbols-ttf"
+	pkg_install() {
+		vmove usr/share/fonts/NerdFonts/ttf
+	}
+}
